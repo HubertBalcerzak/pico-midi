@@ -10,7 +10,9 @@ from analogio import AnalogIn
 
 ANALOG_MIN = 0
 ANALOG_MAX = 65536
+PITCH_BEND_SEND_INTERVAL = 0.05
 
+last_pitch_bend = time.monotonic()
 led = digitalio.DigitalInOut(board.GP25)
 led.direction = digitalio.Direction.OUTPUT
 analog_in = AnalogIn(board.A1)
@@ -43,22 +45,34 @@ buttons = [
 midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)
 
 
-def sendNote(note):
+def start_note(note):
     led.value = 1
     midi.send(NoteOn(note, 120))
-    a_pitch_bend = PitchBend(int((analog_in.value - ANALOG_MIN) / ANALOG_MAX * 16383))
-    midi.send(a_pitch_bend)
-    time.sleep(0.1)
-    midi.send(NoteOff(note, 120))
+
+
+def stop_note(note):
     led.value = 0
+    midi.send(NoteOff(note, 120))
+
+
+def send_pitch_bend():
+    global last_pitch_bend
+    if time.monotonic() - last_pitch_bend > PITCH_BEND_SEND_INTERVAL:
+        pitch_value = int((analog_in.value - ANALOG_MIN) / ANALOG_MAX * 16383)
+        midi.send(PitchBend(pitch_value))
+        last_pitch_bend = time.monotonic()
+
 
 t = 0
 
 while True:
+    send_pitch_bend()
     for button in buttons:
         if time.monotonic() - button["debounceTime"] > 0.1:
             if button["button"].value != button["value"]:
                 button["value"] = button["button"].value
                 button["debounceTime"] = time.monotonic()
                 if button["value"]:
-                    sendNote(button["note"])
+                    stop_note(button["note"])
+                else:
+                    start_note(button["note"])
