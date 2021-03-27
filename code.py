@@ -2,11 +2,11 @@ import board
 import digitalio
 import time
 import usb_midi
-import adafruit_midi
-from adafruit_midi.note_off import NoteOff
-from adafruit_midi.note_on import NoteOn
-from adafruit_midi.pitch_bend import PitchBend
 from analogio import AnalogIn
+from MidiDevice import MidiDevice
+from StartNote import StartNote
+from StopNote import StopNote
+from PitchBend import PitchBend
 
 ANALOG_MIN = 0
 ANALOG_MAX = 65536
@@ -42,17 +42,17 @@ buttons = [
     init_button(board.GP17, 72),
 ]
 
-midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)
+midi = MidiDevice(usb_midi.ports[1])
 
 
 def start_note(note):
     led.value = 1
-    midi.send(NoteOn(note, 120))
+    midi.send(StartNote(note, 120))
 
 
 def stop_note(note):
     led.value = 0
-    midi.send(NoteOff(note, 120))
+    midi.send(StopNote(note, 120))
 
 
 def send_pitch_bend():
