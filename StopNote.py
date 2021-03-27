@@ -3,7 +3,7 @@ from MidiPacket import MidiPacket
 
 class StopNote(MidiPacket):
 
-    def __init__(self, note, velocity):
+    def __init__(self, note, velocity=127):
         self._note = note
         self._velocity = velocity
 
